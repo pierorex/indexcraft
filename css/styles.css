@@ -233,6 +233,23 @@ input[type='range'] {
   overflow-x: auto;
 }
 
+/* Main holdings table: capped height with vertical scroll + sticky header,
+   so a 100-row basket doesn't blow out the page. Row height here is
+   ~2.375rem (0.5rem padding top+bottom + line-height + border), so these
+   max-heights are tuned to roughly N rows + header, not exact. */
+.holdings-scroll {
+  overflow-y: auto;
+  max-height: 26rem; /* ~10 rows */
+}
+
+.holdings-scroll.holdings-scroll--expanded {
+  max-height: 74rem; /* ~30 rows */
+}
+
+.holdings-scroll.holdings-scroll--all {
+  max-height: none;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -253,6 +270,7 @@ th {
   position: sticky;
   top: 0;
   background: var(--panel);
+  z-index: 1;
 }
 
 td:first-child,

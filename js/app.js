@@ -11,6 +11,8 @@ const els = {
   topNValue: document.getElementById('top-n-value'),
   selectAll: document.getElementById('select-all'),
   selectNone: document.getElementById('select-none'),
+  holdingsScroll: document.getElementById('holdings-table-scroll'),
+  holdingsViewToggle: document.getElementById('holdings-view-toggle'),
   selectedCount: document.getElementById('selected-count'),
   coverage: document.getElementById('coverage-value'),
   concentration: document.getElementById('concentration-value'),
@@ -33,6 +35,10 @@ let candidates = []; // top-N filter result, plus any pinned held stocks (see up
 let excluded = new Set(); // symbols manually deselected within the current candidates
 let statementHoldings = []; // all open positions parsed from an imported statement PDF
 let heldSymbols = new Set(); // subset of statementHoldings symbols present in fullIndex
+
+const HOLDINGS_COLLAPSED_ROWS = 10;
+const HOLDINGS_EXPANDED_ROWS = 30;
+let holdingsView = 'collapsed'; // 'collapsed' | 'expanded' | 'all' — cycled by #holdings-view-toggle
 
 const fmtPct = (x) => `${(x * 100).toFixed(1)}%`;
 const fmtEur = (x) =>
@@ -91,6 +97,29 @@ function render() {
 
   renderSectorChart(sectorBreakdown(weighted));
   renderHoldingsTable(weighted);
+  updateHoldingsViewToggle();
+}
+
+// Rows are shown/hidden purely via a CSS max-height on #holdings-table-scroll
+// (see .holdings-scroll in styles.css) — no pagination, the tbody always
+// holds every candidate row.
+function updateHoldingsViewToggle() {
+  const total = candidates.length;
+  els.holdingsScroll.classList.toggle('holdings-scroll--expanded', holdingsView === 'expanded');
+  els.holdingsScroll.classList.toggle('holdings-scroll--all', holdingsView === 'all');
+
+  if (total <= HOLDINGS_COLLAPSED_ROWS) {
+    els.holdingsViewToggle.hidden = true;
+    return;
+  }
+
+  els.holdingsViewToggle.hidden = false;
+  const labels = {
+    collapsed: `Show more (${Math.min(HOLDINGS_EXPANDED_ROWS, total)} of ${total})`,
+    expanded: `Show all (${total})`,
+    all: 'Show less',
+  };
+  els.holdingsViewToggle.textContent = labels[holdingsView];
 }
 
 function renderSectorChart(breakdown) {
@@ -278,6 +307,10 @@ els.selectAll.addEventListener('click', () => {
 els.selectNone.addEventListener('click', () => {
   excluded = new Set(candidates.map((s) => s.symbol));
   render();
+});
+els.holdingsViewToggle.addEventListener('click', () => {
+  holdingsView = holdingsView === 'collapsed' ? 'expanded' : holdingsView === 'expanded' ? 'all' : 'collapsed';
+  updateHoldingsViewToggle();
 });
 [els.principal, els.annualReturn, els.years].forEach((el) =>
   el.addEventListener('input', renderTaxComparison),
