@@ -289,6 +289,48 @@ tr.row-excluded {
   opacity: 0.4;
 }
 
+.sparkline {
+  display: block;
+  color: var(--text-muted);
+}
+
+.sparkline--positive {
+  color: var(--positive);
+}
+
+.sparkline--negative {
+  color: var(--negative);
+}
+
+.return-badges {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.return-badge {
+  display: inline-block;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  background: var(--bg);
+  border: 1px solid var(--border);
+}
+
+.return-badge.positive {
+  color: var(--positive);
+  border-color: color-mix(in srgb, var(--positive) 40%, var(--border));
+}
+
+.return-badge.negative {
+  color: var(--negative);
+  border-color: color-mix(in srgb, var(--negative) 40%, var(--border));
+}
+
+.return-badge--empty {
+  color: var(--text-muted);
+}
+
 .tax-result {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));

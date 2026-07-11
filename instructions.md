@@ -1,6 +1,8 @@
 # Handoff instructions — ETF Builder
 
-Written 2026-07-11. This file exists so a new session (AI or human) can pick up
+Written 2026-07-11, updated 2026-07-11 (same day, later session — real
+constituent data + return history/sparklines shipped). This file exists so a
+new session (AI or human) can pick up
 this project without re-deriving context. Update it whenever you finish a
 chunk of work or learn something a future session would need. Keep it current
 — stale handoff docs are worse than none. It merges what used to be a
@@ -31,7 +33,7 @@ dropped from scope on purpose. See "Explicitly out of scope" below.
 
 ### v0 / MVP
 
-- [x] Load S&P 500 / NASDAQ-100 constituents (static bundled snapshot, see README on refreshing)
+- [x] Load S&P 500 / NASDAQ-100 constituents (real data, `scripts/fetch-constituents.mjs`, see README on refreshing)
 - [x] Pick top N holdings via slider
 - [x] Cap-weight vs equal-weight toggle
 - [x] Index coverage % (how much of total index market cap your top-N basket captures)
@@ -76,9 +78,13 @@ dropped from scope on purpose. See "Explicitly out of scope" below.
 
 ### Data sourcing (see README Q5 writeup)
 
-- [x] MVP ships a static, manually-refreshed snapshot — no live API call, no API key in client code
-- [ ] Small refresh script (Node, run locally / in CI) to regenerate `data/*.json` from a free source periodically
+- [x] Real constituent data (`scripts/fetch-constituents.mjs`: Wikipedia + Nasdaq public APIs), run manually when you want a refresh — no live API call from the browser, no API key anywhere
+- [x] Return history (1y/5y/10y + sparkline series, `scripts/fetch-returns.mjs`, Yahoo Finance chart endpoint) — this one runs automatically, monthly, via `.github/workflows/update-returns.yml`
 - [ ] Evaluate whether a thin backend proxy is ever justified (see README Q6 writeup) — current answer: no, not for this app's needs
+
+### Performance context (this session)
+
+- [x] Inline 1-year sparkline + 1y/5y/10y return badges per holdings row, sourced from `data/returns.json`
 
 ### Explicitly out of scope (for now)
 
@@ -87,6 +93,52 @@ dropped from scope on purpose. See "Explicitly out of scope" below.
 - Investment advice / recommendations — pure calculator, user makes all decisions
 
 ## Current feature goal (as of this session)
+
+Just shipped: **real S&P 500 / NASDAQ-100 constituent data** (replacing the
+old ~100-name illustrative snapshot) **+ per-holding return history**
+(1y/5y/10y badges and a 1-year sparkline).
+
+1. `scripts/fetch-constituents.mjs` regenerates `data/sp500.json` (502
+   constituents) and `data/nasdaq100.json` (103 constituents) from Wikipedia
+   (S&P 500 membership/name/GICS sector) and Nasdaq's public APIs (NASDAQ-100
+   membership/name/market cap, plus market cap for the S&P 500 names and a
+   sector fallback for NASDAQ-100-only names). Same JSON schema as before, so
+   nothing else in the app needed to change. Run it manually to refresh —
+   it's not on a schedule (index membership only changes a few times a year).
+   One symbol (`BF.B`) is dropped, not zero-filled, because no source has a
+   market cap for it — see README "Refreshing the data".
+2. `scripts/fetch-returns.mjs` regenerates `data/returns.json` — 1y total
+   return, 5y/10y annualized (CAGR) return, and a 13-point monthly sparkline
+   series, per ticker, sourced from Yahoo Finance's unofficial chart endpoint
+   (monthly adjusted close). This one **does** run on a schedule: monthly, via
+   `.github/workflows/update-returns.yml` (GitHub Actions cron, commits the
+   result back to `main`, `contents: write` permission).
+3. `js/sparkline.js` — new pure function (`buildSparkline`), unit tested
+   (`test/sparkline.test.js`), turns a price series into SVG polyline point
+   data + a positive/negative/flat trend label. No charting library.
+4. `js/app.js` / `index.html` / `css/styles.css` — two new holdings-table
+   columns: an inline SVG sparkline ("1y trend") and three small
+   color-coded percentage badges ("Returns": 1y/5y/10y), reusing the
+   existing `--positive`/`--negative` CSS variables. `data/returns.json` is
+   fetched once at startup (`loadReturnsData()`), independent of which index
+   is selected, since it's keyed by ticker across both.
+
+### Data-source detours worth knowing about
+
+Two of the sources that looked obvious up front didn't pan out, and both
+turned out to have (deliberate) bot-detection walls rather than just being
+flaky:
+- **iShares/Invesco ETF holdings CSVs** — the old README Q5 recommendation.
+  In practice, iShares serves a JS verification challenge instead of the CSV.
+  Replaced by Wikipedia + Nasdaq's own public APIs, which turned out to be
+  strictly better anyway (Nasdaq's screener API gives market cap *and*
+  sector for the whole market in one call).
+- **Stooq's CSV endpoint** — now requires solving a client-side
+  proof-of-work challenge (SHA-256 hashcash-style) before it responds. Not
+  something worth building a solver for. Replaced by Yahoo Finance's
+  unofficial chart endpoint, which works cleanly with no such wall.
+
+### Previously shipped: Trading 212 statement import
 
 Just shipped: **import a Trading 212 monthly statement PDF** to auto-select
 your real holdings in the basket builder.
@@ -203,15 +255,33 @@ different T212 template version) fails to parse:
   (Node's built-in `node --test` runner covers everything). Don't add a
   bundler, a test framework, or an npm dependency without a strong reason —
   this is a stated project value (see README Q6, "no build step").
-- `data/sp500.json` and `data/nasdaq100.json` are **hand-assembled
-  illustrative snapshots**, not live/complete index data — 103 and 99
-  constituents respectively, not the real ~500 / ~100. This is why a real
-  statement only partially matches (e.g. 15/34 holdings matched S&P 500 in
-  testing) — most misses are simply because the stock isn't in the sample
-  dataset, not a parsing failure. See README "Q5" for how to source real
-  data if that ever becomes worth doing.
+- `data/sp500.json` (502 constituents) and `data/nasdaq100.json` (103
+  constituents) are now real data (see "Current feature goal" above), not
+  the old illustrative snapshot — a statement match rate should now reflect
+  actual index membership, not sample-dataset coverage.
+- `data/returns.json` (516 tickers) is real Yahoo Finance return history,
+  refreshed monthly by CI. Three external APIs used, all free/keyless:
+  Wikipedia (`en.wikipedia.org/wiki/List_of_S%26P_500_companies`), Nasdaq's
+  public API (`api.nasdaq.com/api/screener/stocks`,
+  `api.nasdaq.com/api/quote/list-type/nasdaq100`), and Yahoo Finance's
+  unofficial chart endpoint (`query1.finance.yahoo.com/v8/finance/chart/{symbol}`).
+  All three are undocumented/unofficial in the sense that there's no formal
+  API contract or SLA — if any of them change shape, `scripts/fetch-*.mjs`
+  will need updating. See README "Q5" for the two sources that turned out
+  to be dead ends (iShares/Invesco holdings CSVs, Stooq).
 
 ## Known issues / rough edges
+
+- **One ticker has no return data.** `HONA` (Honeywell Aerospace, spun off
+  from Honeywell in 2025) has too little trading history on Yahoo Finance
+  for `scripts/fetch-returns.mjs` to compute anything — it renders with "—"
+  in the trend/returns columns. Expected, not a bug; will resolve itself
+  once it has a full year of price history.
+- **No test coverage for the two new precompute scripts**
+  (`fetch-constituents.mjs`, `fetch-returns.mjs`) — consistent with existing
+  project convention (only pure functions get unit tests; scripts that hit
+  the network don't). `js/sparkline.js`, the pure geometry function they
+  feed into on the client side, *is* tested.
 
 - **Symbol collisions across indices aren't handled.** If a user has a
   position in a stock that exists in both `sp500.json` and `nasdaq100.json`
@@ -244,9 +314,9 @@ different T212 template version) fails to parse:
   `http://localhost:8743`. Must be a real HTTP server — `file://` breaks the
   `fetch()` calls for `data/*.json` (CORS on local file access).
 - Tests: `npm test` (`node --test test/*.test.js`, zero deps).
-- No git repository is initialized in this directory as of this session
-  (verified via environment info — "Is a git repository: false"). If you
-  want version history / rollback safety, `git init` first.
+- Git repo, pushed to GitHub as `pierorex/indexcraft` (public), deployed via
+  GitHub Pages at https://pierorex.github.io/indexcraft/. `main` is the only
+  branch; Pages redeploys automatically on push.
 - This session used Playwright (installed ad hoc into a scratch tmp
   directory, not this repo) purely to verify the feature end-to-end against
   a real statement PDF at `/Users/piero/Documents/mortgage/trading212/`. That
@@ -256,7 +326,8 @@ different T212 template version) fails to parse:
 
 ## Suggested next steps (not started)
 
-In rough priority order, from the last conversation:
+In rough priority order, from the last conversation (still accurate after
+this session's data/returns work — none of it was started):
 
 1. **Overlap/drift detector** — compare the target basket (from top-N +
    weighting) against `statementHoldings`, show over/underweight per

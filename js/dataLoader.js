@@ -4,3 +4,9 @@ export async function loadIndex(name) {
   if (!res.ok) throw new Error(`Failed to load ${file}: ${res.status}`);
   return res.json();
 }
+
+export async function loadReturns() {
+  const res = await fetch('data/returns.json');
+  if (!res.ok) throw new Error(`Failed to load data/returns.json: ${res.status}`);
+  return res.json();
+}

@@ -1,8 +1,9 @@
-import { loadIndex } from './dataLoader.js';
+import { loadIndex, loadReturns } from './dataLoader.js';
 import { selectTopN, capWeights, equalWeights, indexCoverage, sectorBreakdown, concentrationCheck } from './portfolio.js';
 import { compareDiyVsEtf } from './tax.js';
 import { extractTextFromPdf } from './pdfExtract.js';
 import { parseHoldingsFromText } from './statementParser.js';
+import { buildSparkline } from './sparkline.js';
 
 const els = {
   indexSelect: document.getElementById('index-select'),
@@ -35,6 +36,7 @@ let candidates = []; // top-N filter result, plus any pinned held stocks (see up
 let excluded = new Set(); // symbols manually deselected within the current candidates
 let statementHoldings = []; // all open positions parsed from an imported statement PDF
 let heldSymbols = new Set(); // subset of statementHoldings symbols present in fullIndex
+let returnsBySymbol = {}; // ticker -> { return1y, return5yAnnualized, return10yAnnualized, sparkline }, from data/returns.json
 
 const HOLDINGS_COLLAPSED_ROWS = 10;
 const HOLDINGS_EXPANDED_ROWS = 30;
@@ -43,6 +45,16 @@ let holdingsView = 'collapsed'; // 'collapsed' | 'expanded' | 'all' — cycled b
 const fmtPct = (x) => `${(x * 100).toFixed(1)}%`;
 const fmtEur = (x) =>
   x.toLocaleString('en-IE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
+
+async function loadReturnsData() {
+  try {
+    const data = await loadReturns();
+    returnsBySymbol = data.tickers || {};
+  } catch (err) {
+    console.error('Could not load return history — trend/return columns will be blank.', err);
+    returnsBySymbol = {};
+  }
+}
 
 async function loadAndRender() {
   const data = await loadIndex(els.indexSelect.value);
@@ -148,6 +160,40 @@ function renderSectorChart(breakdown) {
   }
 }
 
+function renderSparklineCell(returns) {
+  const spark = returns && buildSparkline(returns.sparkline);
+  if (!spark) return '<span class="hint">—</span>';
+  return `
+    <svg class="sparkline sparkline--${spark.trend}" width="${spark.width}" height="${spark.height}" viewBox="0 0 ${spark.width} ${spark.height}" aria-hidden="true">
+      <polyline points="${spark.points}" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" />
+    </svg>
+  `;
+}
+
+function fmtSignedPct(x) {
+  return x == null ? null : `${x >= 0 ? '+' : ''}${(x * 100).toFixed(1)}%`;
+}
+
+function renderReturnBadges(returns) {
+  const periods = [
+    ['1y', returns?.return1y],
+    ['5y', returns?.return5yAnnualized],
+    ['10y', returns?.return10yAnnualized],
+  ];
+  return `
+    <div class="return-badges">
+      ${periods
+        .map(([label, value]) => {
+          const text = fmtSignedPct(value);
+          if (text == null) return `<span class="return-badge return-badge--empty">${label} —</span>`;
+          const cls = value >= 0 ? 'positive' : 'negative';
+          return `<span class="return-badge ${cls}">${label} ${text}</span>`;
+        })
+        .join('')}
+    </div>
+  `;
+}
+
 function renderHoldingsTable(weighted) {
   els.holdingsTable.innerHTML = '';
   const weightBySymbol = new Map(weighted.map((s) => [s.symbol, s.weight]));
@@ -180,6 +226,8 @@ function renderHoldingsTable(weighted) {
       <td>${s.name}</td>
       <td>${s.sector}</td>
       <td>${weight !== undefined ? fmtPct(weight) : '—'}</td>
+      <td>${renderSparklineCell(returnsBySymbol[s.symbol])}</td>
+      <td>${renderReturnBadges(returnsBySymbol[s.symbol])}</td>
     `,
     );
     els.holdingsTable.appendChild(tr);
@@ -316,5 +364,9 @@ els.holdingsViewToggle.addEventListener('click', () => {
   el.addEventListener('input', renderTaxComparison),
 );
 
-loadAndRender();
-renderTaxComparison();
+async function init() {
+  await loadReturnsData();
+  await loadAndRender();
+  renderTaxComparison();
+}
+init();
