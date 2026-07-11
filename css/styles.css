@@ -1,0 +1,375 @@
+:root {
+  --bg: #0f1115;
+  --panel: #171a21;
+  --border: #2a2e38;
+  --text: #e6e8ec;
+  --text-muted: #9aa1ad;
+  --accent: #4f8cff;
+  --positive: #3ecf8e;
+  --negative: #f0625c;
+  --radius: 10px;
+  --gap: 1rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.app-header {
+  padding: 1.5rem 1rem 0.5rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.app-header h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.6rem;
+}
+
+.subtitle {
+  color: var(--text-muted);
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+}
+
+.panel h2 {
+  margin-top: 0;
+  font-size: 1.1rem;
+}
+
+.hint {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-top: -0.5rem;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--gap);
+}
+
+.control {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.control--wide {
+  grid-column: 1 / -1;
+}
+
+label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+select,
+input[type='number'] {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.5rem 0.6rem;
+  font-size: 1rem;
+  width: 100%;
+}
+
+input[type='range'] {
+  width: 100%;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--gap);
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.stat-label {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.stat-value {
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+.sector-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sector-row {
+  display: grid;
+  grid-template-columns: 140px 1fr 56px;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.9rem;
+}
+
+.sector-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sector-bar-track {
+  background: var(--bg);
+  border-radius: 4px;
+  height: 10px;
+  overflow: hidden;
+}
+
+.sector-bar {
+  background: var(--accent);
+  height: 100%;
+  border-radius: 4px;
+}
+
+.sector-value {
+  text-align: right;
+  color: var(--text-muted);
+}
+
+.dropzone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  text-align: center;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+
+.dropzone:hover,
+.dropzone:focus-visible {
+  border-color: var(--accent);
+}
+
+.dropzone.dragover {
+  border-color: var(--accent);
+  background: rgba(79, 140, 255, 0.08);
+}
+
+.dropzone p {
+  margin: 0;
+}
+
+.statement-holdings {
+  margin-top: 1rem;
+}
+
+.positive {
+  color: var(--positive);
+}
+
+.negative {
+  color: var(--negative);
+}
+
+.match-yes {
+  color: var(--positive);
+  white-space: nowrap;
+}
+
+.match-no {
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.select-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.select-actions button {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.select-actions button:hover {
+  border-color: var(--accent);
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 0.5rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+th {
+  color: var(--text-muted);
+  font-weight: 500;
+  position: sticky;
+  top: 0;
+  background: var(--panel);
+}
+
+td:first-child,
+th:first-child {
+  width: 2rem;
+  white-space: nowrap;
+}
+
+input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+tr.row-excluded {
+  opacity: 0.4;
+}
+
+.tax-result {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--gap);
+  margin-top: 1rem;
+}
+
+.tax-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+}
+
+.tax-card h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+.tax-final {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 0.25rem;
+}
+
+.tax-final.positive {
+  color: var(--positive);
+}
+
+.tax-final.negative {
+  color: var(--negative);
+}
+
+.tax-detail {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.tax-card--advantage {
+  border-color: var(--accent);
+}
+
+.app-footer {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1rem;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.app-footer a {
+  color: var(--accent);
+}
+
+/* ---- Responsive breakpoints ---- */
+
+/* Phone: stack everything, full-width controls (default above already stacks via flex column) */
+@media (max-width: 480px) {
+  .app-header h1 {
+    font-size: 1.3rem;
+  }
+
+  .panel {
+    padding: 1rem 0.85rem;
+  }
+
+  .sector-row {
+    grid-template-columns: 90px 1fr 48px;
+    font-size: 0.8rem;
+  }
+
+  th,
+  td {
+    padding: 0.4rem 0.45rem;
+    font-size: 0.8rem;
+  }
+}
+
+/* iPad / tablet: two-column controls and stats */
+@media (min-width: 481px) and (max-width: 1024px) {
+  .controls {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Desktop: wider layout, three-column controls */
+@media (min-width: 1025px) {
+  .controls {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .control--wide {
+    grid-column: span 3;
+  }
+}

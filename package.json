@@ -1,0 +1,10 @@
+{
+  "name": "etf-builder",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "description": "DIY S&P 500 / NASDAQ-100 basket builder — static HTML/CSS/JS, no build step.",
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  }
+}

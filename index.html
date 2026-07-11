@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ETF Builder — DIY Index Basket</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+</head>
+<body>
+  <header class="app-header">
+    <h1>DIY ETF Builder</h1>
+    <p class="subtitle">Replicate the S&amp;P 500 / NASDAQ-100 with your own basket — and see if it beats a UCITS ETF after Irish tax.</p>
+  </header>
+
+  <main>
+    <section class="panel" aria-label="Import Trading 212 statement">
+      <h2>Import your Trading 212 statement</h2>
+      <p class="hint">Drop your Trading 212 monthly statement PDF here to select your current holdings in the list below and see them summarized here. Parsing happens entirely in your browser — nothing is uploaded anywhere.</p>
+      <div id="statement-dropzone" class="dropzone" tabindex="0" role="button" aria-label="Upload Trading 212 statement PDF">
+        <p id="dropzone-text">Drag &amp; drop a statement PDF here, or click to browse</p>
+        <input type="file" id="statement-file-input" accept="application/pdf" hidden />
+      </div>
+      <p id="statement-status" class="hint" role="status"></p>
+      <div id="statement-holdings-section" class="statement-holdings" hidden>
+        <div class="select-actions">
+          <button type="button" id="statement-clear">Clear import</button>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Symbol</th>
+                <th>Quantity</th>
+                <th>Value</th>
+                <th>Return</th>
+                <th>In current list?</th>
+              </tr>
+            </thead>
+            <tbody id="statement-holdings-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel controls" aria-label="Basket controls">
+      <div class="control">
+        <label for="index-select">Index</label>
+        <select id="index-select">
+          <option value="sp500">S&amp;P 500</option>
+          <option value="nasdaq100">NASDAQ-100</option>
+        </select>
+      </div>
+
+      <div class="control">
+        <label for="weighting-select">Weighting</label>
+        <select id="weighting-select">
+          <option value="cap">Cap-weighted</option>
+          <option value="equal">Equal-weighted</option>
+        </select>
+      </div>
+
+      <div class="control control--wide">
+        <label for="top-n">Top N holdings: <span id="top-n-value">50</span></label>
+        <input type="range" id="top-n" min="1" max="100" value="50" />
+      </div>
+    </section>
+
+    <section class="panel stats" aria-label="Basket stats">
+      <div class="stat">
+        <span class="stat-label">Index coverage</span>
+        <span class="stat-value" id="coverage-value">—</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Largest single position</span>
+        <span class="stat-value" id="concentration-value">—</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Selection</span>
+        <span class="stat-value" id="selected-count">—</span>
+      </div>
+    </section>
+
+    <section class="panel" aria-label="Sector breakdown">
+      <h2>Sector breakdown</h2>
+      <div id="sector-chart" class="sector-chart"></div>
+    </section>
+
+    <section class="panel" aria-label="Holdings table">
+      <h2>Holdings</h2>
+      <p class="hint">Top N filters which stocks are candidates. Use the checkboxes to pick exactly which of them go in your basket — weights are recalculated over your selection only.</p>
+      <div class="select-actions">
+        <button type="button" id="select-all">Select all</button>
+        <button type="button" id="select-none">Select none</button>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th></th>
+              <th>Symbol</th>
+              <th>Name</th>
+              <th>Sector</th>
+              <th>Weight</th>
+            </tr>
+          </thead>
+          <tbody id="holdings-table-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel" aria-label="DIY vs ETF tax comparison">
+      <h2>DIY vs UCITS ETF — Irish tax comparison</h2>
+      <p class="hint">DIY: 33% CGT on realised gains, one-off €1,270 exemption at sale. ETF: 41% tax on gains, charged every 8 years (deemed disposal) and again at final sale.</p>
+
+      <div class="controls">
+        <div class="control">
+          <label for="tax-principal">Initial investment (€)</label>
+          <input type="number" id="tax-principal" value="10000" min="0" step="100" />
+        </div>
+        <div class="control">
+          <label for="tax-return">Expected annual return (%)</label>
+          <input type="number" id="tax-return" value="7" step="0.5" />
+        </div>
+        <div class="control">
+          <label for="tax-years">Years held</label>
+          <input type="number" id="tax-years" value="24" min="0" step="1" />
+        </div>
+      </div>
+
+      <div id="tax-result" class="tax-result"></div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <p>Planning tool only — not investment or tax advice. Data is a manually refreshed snapshot, not live. See <a href="instructions.md">instructions.md</a>.</p>
+  </footer>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
